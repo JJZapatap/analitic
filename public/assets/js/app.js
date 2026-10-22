@@ -3,10 +3,25 @@ if (window.tvMode) {
     const res = await fetch('index.php?page=tv-data');
     const rows = await res.json();
     const table = document.getElementById('tv-table');
-    table.innerHTML = '<tr><th>Turno</th><th>Servicio</th><th>Asesor</th><th>Hora</th></tr>';
-    rows.forEach(r => {
-      table.innerHTML += `<tr><td>${r.code}</td><td>${r.service}</td><td>${r.advisor || ''}</td><td>${r.called_at || ''}</td></tr>`;
+    const header = document.createElement('tr');
+    ['Turno', 'Servicio', 'Asesor', 'Hora'].forEach(label => {
+      const cell = document.createElement('th');
+      cell.textContent = label;
+      header.appendChild(cell);
     });
+    const body = document.createElement('tbody');
+    rows.forEach(r => {
+      const row = document.createElement('tr');
+      [r.code, r.service, r.advisor, r.called_at].forEach(value => {
+        const cell = document.createElement('td');
+        cell.textContent = value ?? '';
+        row.appendChild(cell);
+      });
+      body.appendChild(row);
+    });
+    const head = document.createElement('thead');
+    head.appendChild(header);
+    table.replaceChildren(head, body);
   };
   refresh();
   setInterval(refresh, 3000);

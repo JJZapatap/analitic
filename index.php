@@ -50,18 +50,19 @@ if ($page === 'advisor') {
         if ($action==='call_next') {
             $ticket=db()->query('SELECT t.* FROM tickets t WHERE status="espera" ORDER BY id ASC LIMIT 1')->fetch();
             if ($ticket) db()->prepare('UPDATE tickets SET status="llamado", advisor_id=?, called_at=NOW() WHERE id=?')->execute([$uid,$ticket['id']]);
-        } elseif ($action==='repeat') db()->prepare('UPDATE tickets SET called_at=NOW() WHERE id=?')->execute([$ticketId]);
-        elseif ($action==='finish') db()->prepare('UPDATE tickets SET status="finalizado", finished_at=NOW() WHERE id=?')->execute([$ticketId]);
-        elseif ($action==='absent') db()->prepare('UPDATE tickets SET status="ausente", finished_at=NOW() WHERE id=?')->execute([$ticketId]);
-        elseif ($action==='transfer') db()->prepare('UPDATE tickets SET service_id=?, status="espera", advisor_id=NULL WHERE id=?')->execute([(int)$_POST['new_service_id'],$ticketId]);
+        } elseif ($action==='repeat') db()->prepare('UPDATE tickets SET called_at=NOW() WHERE id=? AND advisor_id=? AND status="llamado"')->execute([$ticketId,$uid]);
+        elseif ($action==='finish') db()->prepare('UPDATE tickets SET status="finalizado", finished_at=NOW() WHERE id=? AND advisor_id=? AND status="llamado"')->execute([$ticketId,$uid]);
+        elseif ($action==='absent') db()->prepare('UPDATE tickets SET status="ausente", finished_at=NOW() WHERE id=? AND advisor_id=? AND status="llamado"')->execute([$ticketId,$uid]);
+        elseif ($action==='transfer') db()->prepare('UPDATE tickets SET service_id=?, status="espera", advisor_id=NULL WHERE id=? AND advisor_id=? AND status="llamado"')->execute([(int)$_POST['new_service_id'],$ticketId,$uid]);
     }
     $current = db()->query("SELECT t.*, s.name service FROM tickets t JOIN services s ON s.id=t.service_id WHERE t.status='llamado' AND t.advisor_id=$uid ORDER BY t.called_at DESC LIMIT 1")->fetch();
     $waiting = db()->query("SELECT t.*, s.name service FROM tickets t JOIN services s ON s.id=t.service_id WHERE t.status='espera' ORDER BY t.id LIMIT 10")->fetchAll();
     $services=db()->query('SELECT * FROM services WHERE active=1')->fetchAll();
     render('advisor', compact('current','waiting','services')); exit;
 }
-if ($page === 'tv') { render('tv'); exit; }
+if ($page === 'tv') { require_role(['administrador','pantalla']); render('tv'); exit; }
 if ($page === 'tv-data') {
+    require_role(['administrador','pantalla']);
     header('Content-Type: application/json');
     echo json_encode(db()->query("SELECT t.code,s.name service,u.name advisor,t.called_at FROM tickets t JOIN services s ON s.id=t.service_id LEFT JOIN users u ON u.id=t.advisor_id WHERE t.status='llamado' ORDER BY t.called_at DESC LIMIT 12")->fetchAll()); exit;
 }

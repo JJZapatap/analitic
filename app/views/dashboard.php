@@ -7,5 +7,7 @@
         <a class="card link" href="index.php?page=advisor">Panel Asesor</a>
     <?php endif; ?>
     <a class="card link" href="index.php?page=kiosk">Kiosco</a>
-    <a class="card link" href="index.php?page=tv">Pantalla TV</a>
+    <?php if (in_array(current_user()['role'], ['administrador','pantalla'], true)): ?>
+        <a class="card link" href="index.php?page=tv">Pantalla TV</a>
+    <?php endif; ?>
 </div>
